@@ -1,3 +1,4 @@
+from basededatos import guardardatos 
 import pandas as pd
 import os
 import csv
@@ -12,4 +13,6 @@ with open(dirActual + "/proyecto/precios_en_surtidor.csv","r") as arch:
         print(rows.count)
         print(rows[1])
         contador+=1
+        if contador >3:
+            break
        
