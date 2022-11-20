@@ -4,10 +4,31 @@ import csv
 import mysql.connector
 
 
-limpiar = os.system('cls')
+os.system('cls')
 
+lista=list()
 
-def cargarDatosTabla():
+def leerArchivo_csv():    
+    dirArctual=os.getcwd()
+    archivo =pd.read_csv(dirArctual +"/proyecto/precios_en_surtidor.csv") 
+    lectura=archivo.values.tolist()    
+    contador=0
+    for filas in lectura:               
+        try:
+            vector=[]
+            vector.append(filas[0])
+            vector.append(filas[1])
+            vector.append(filas[3])
+            vector.append(filas[8])
+            vector.append(filas[9])
+            vector.append(filas[12])  
+            lista.append(vector)            
+        except Exception as ex:
+             print("")                     
+    
+    return lista       
+
+def borrarDatos():
     try:
         conexion= mysql.connector.connect(
             host='181.28.157.113',
@@ -18,78 +39,47 @@ def cargarDatosTabla():
         )
 
         if conexion.is_connected():
-            cursor= conexion.cursor()
-            sql = "INSERT INTO datosestaciones (periodo) VALUES (%s)"
-            val=('2010')
-            cursor.execute(sql,val)
+            cursor= conexion.cursor()                                      
+            cursor.execute("set SQL_SAFE_UPDATES=0")
+            conexion.commit()
+            cursor.execute("DELETE FROM datosestaciones")
+            conexion.commit()
+            cursor.execute("set SQL_SAFE_UPDATES=1")
             conexion.commit()
             conexion.close()
-
-
-
     except Exception as ex:
         print(ex)
     finally:
         conexion.close()
-cargarDatosTabla()
 
+def guardarenBaseDatos():
+    borrarDatos()    
 
-
-#def crear_connexion():
- #   try:
-#        connection=coneccion.connect(
-#             host='181.28.157.113',
-#             port='3306',
-#             user='root',
-#             password='ar200441256',
-#             db='cienciasdatos'
-#        )
-#        if connection.is_connected():
-#            return connection
-#        else:
-#            connection.close()
-#            return None
-#    except Exception as ex:       
-#        return None
-#def cargarTabla():
-    
-    #if conexion==None:
-    #    print("error de conexion")
-    #    quit()
-    #else:
-    #    cursor= conexion.cursor()
+    try:
         
-    #    sql = "INSERT INTO datosestaciones (periodo) VALUES (%s)"    
-    #    val = ('2010')
-    #    cursor.execute(sql, ("hola"))  
-    #    conexion.close()
-#    try:
- #       connection = coneccion.connect(
-  #          host='181.28.157.113',
-  #            port='3306',
-     #         user='root',
-   #           password='ar200441256',
-   #           db='cienciasdatos'
-   #       )       
-  #        if connection.is_connected():
-   #           cursor=connection.cursor()
-   #           cursor.execute("CREATE TABLE IF NOT EXISTS datos( iddatos INT NOT NULL, PRIMARY KEY (iddatos));")
-  #            
-   #   except Exception as ex:
-    #          print(ex)
-    #  finally:
-    #          if connection.is_connected():
-   #               connection.close()
-#def tomarDatosCsv():
- #   dirActual=os.getcwd()
+        conexion= mysql.connector.connect(
+            host='181.28.157.113',
+             port='3306',
+             user='root',
+             password='ar200441256',
+             db='cienciasdatos'
+        )
 
-#with open(dirActual + "/proyecto/precios_en_surtidor.csv","r") as arch:
-#    lectura = csv.reader(arch, delimiter=",")
- 
-#    contador =0 
-#    for rows in lectura:
-#        print(rows.count)
-#        print(rows[1])
-#        contador+=1
-#        if contador >3:
-#            break
+        if conexion.is_connected():                                
+            cursor= conexion.cursor()
+            sql = "INSERT INTO datosestaciones "\
+                   "(periodo, id_empresa, "\
+                   "empresa, id_productos, "\
+                   "productos, precio) "\
+                    "VALUES (%s,%s,%s,%s,%s,%s)"
+            cursor.executemany(sql,lista)    
+            conexion.commit()            
+            conexion.close()
+    except Exception as ex:
+        print(ex)
+    finally:
+        conexion.close()
+
+leerArchivo_csv()
+guardarenBaseDatos()
+    
