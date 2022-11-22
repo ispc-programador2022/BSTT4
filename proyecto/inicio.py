@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import csv
 import mysql.connector
 
 
@@ -11,8 +10,7 @@ lista=list()
 def leerArchivo_csv():    
     dirArctual=os.getcwd()
     archivo =pd.read_csv(dirArctual +"/proyecto/precios_en_surtidor.csv") 
-    lectura=archivo.values.tolist()    
-    contador=0
+    lectura=archivo.values.tolist()   
     for filas in lectura:               
         try:
             vector=[]
