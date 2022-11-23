@@ -3,13 +3,12 @@ import os
 import mysql.connector
 import requests
 from bs4 import BeautifulSoup
-import time
 
-os.system('cls')
+
 
 lista=list()
 
-
+#lee el archivo csv y lo guarda en una lista
 def leerArchivo_csv():    
     dirArctual=os.getcwd()
     archivo =pd.read_csv(dirArctual +"/proyecto/precios_en_surtidor.csv") 
@@ -29,6 +28,7 @@ def leerArchivo_csv():
     
     return lista       
 
+#Borra los datos de la tabla para que cuando se vuelvan a cargar no se repitan...
 def borrarDatos():
     try:
         conexion= mysql.connector.connect(
@@ -45,6 +45,8 @@ def borrarDatos():
             conexion.commit()
             cursor.execute("DELETE FROM datosestaciones")
             conexion.commit()
+            cursor.execute("DELETE FROM inflacionmensual")
+            conexion.commit()
             cursor.execute("set SQL_SAFE_UPDATES=1")
             conexion.commit()
             conexion.close()
@@ -53,6 +55,7 @@ def borrarDatos():
     finally:
         conexion.close()
 
+#Guarda los datos del archivo csv a la tabla datosestaciones
 def guardarenBaseDatos():
     borrarDatos()    
 
@@ -81,6 +84,7 @@ def guardarenBaseDatos():
     finally:
         conexion.close()
 
+#Hace el web scraping y los datos obtenidos los guarda en la tabla inflacionmensual
 def web_scraping():
     anos=["2016", "2017" , "2018", "2019", "2020", "2021", "2022"]
     mesano={'Enero':'01', 'Febrero':'02', 'Marzo': '03', 'Abril': '04', 'Mayo': '05','Junio':'06', 'Julio':'07', 'Agosto':'08','Septiembre':'09','Octubre':'10','Noviembre':'11','Diciembre':'12'}
@@ -88,7 +92,7 @@ def web_scraping():
     for ano in anos:
 
         url_inicial = 'https://datosmacro.expansion.com/ipc-paises/argentina?sector=IPC+General&sc=IPC-IG&anio=' + ano
-        print (url_inicial)
+        
         # Pedido a la página
         r = requests.get(url_inicial)
 
@@ -100,7 +104,7 @@ def web_scraping():
         rows = soup.find('table', attrs={"id": "tb1_415"}).find('tbody').find_all('tr')       
         # print(rows)
 
-        
+       
 
         try:
         
@@ -125,10 +129,12 @@ def web_scraping():
                         inter= str(row.find_all('td')[1].get_text()).replace("%","").replace(",",".").replace("--","0.00")
                         acumu= str(row.find_all('td')[3].get_text()).replace("%","").replace(",",".").replace("--","0.00")
                         vari=str(row.find_all('td')[5].get_text()).replace("%","").replace(",",".").replace("--","0.00")
+                        
                         if len(acumu)==0:
                             acumu="0.00"
-                        else:
-                            acumu=acumu
+                        if len(vari)==0:
+                            vari="0.00"
+
 
                         sql = "INSERT INTO inflacionmensual "\
                                 "(periodo, infacioninteranual, inflacionacumulada, inflacionvariacion) "\
@@ -148,12 +154,15 @@ def web_scraping():
             print(ex)
         finally:
             conexion.close()
-      
 
+
+#parte principal se ejecuta todas las funciones
+os.system('cls')      
+leerArchivo_csv()
+guardarenBaseDatos()
 web_scraping()
+print("fin de exportar y guardar datos")
 
 
 
-#leerArchivo_csv()
-#guardarenBaseDatos()
     
